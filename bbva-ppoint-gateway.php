@@ -73,7 +73,8 @@ class abcom_Bbva_Payment_Gateway extends WC_Payment_Gateway {
   }//End of administration fields
 
 //Response handled for payment Gateway
-/* public function process_payment($order_id){
+/*
+public function process_payment($order_id){
   global $woocommerce;
 
   $customer_order = new WC_Order($order_id);
@@ -81,11 +82,24 @@ class abcom_Bbva_Payment_Gateway extends WC_Payment_Gateway {
   //Checking the transaction
   $environment = ($this->environment == "yes") ? 'TRUE' : 'FALSE';
 
+  if($environment == 'TRUE'){
+    Bbva::setProductionMode(true);
+  }else {
+    Bbva::setProductionMode(false);
+  }
+
   //Decide which URL to post to
   $environment_url = ("FALSE" == $environment)
-                        ? ''
-                        : 'https://sand-api.ecommercebbva.com/'
-}*/
+                        ? 'https://api.ecommercebbva.com/'
+                        : 'https://sand-api.ecommercebbva.com/';
+  //This is where the funny stuff begins :'v
+  $payload = array(
+    "x_tran_key"
+
+    $bbva = Bbva::getInstance('','')
+  );
+}
+*/
 
 }
 

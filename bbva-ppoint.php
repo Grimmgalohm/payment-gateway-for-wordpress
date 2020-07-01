@@ -16,6 +16,9 @@ function abcom_payment_gateway_init(){
 
   include_once('bbva-ppoint-gateway.php');
 
+  //include the package of the BBVA E-commerce github
+  require(dirname(__FILE__) . '/BBVA-PHP/Bbva.php');
+
   //class add it to woocommerce
   add_filter('woocommerce_payment_gateways', 'abcom_add_bbva_aim_gateway');
   function abcom_add_bbva_aim_gateway($methods){
