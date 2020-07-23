@@ -20,6 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action('plugins_loaded', 'bbva_init_gateway_class');
 function bbva_init_gateway_class(){
 
+	//include the package of the BBVA E-commerce github
+	require(dirname(__FILE__) . '/BBVA-PHP/Bbva.php');
+
 	include_once(dirname(__FILE__) . '/includes/WC_Gateway_bbva.php');
 
 	include_once(dirname(__FILE__) . '/includes/WC_Checkout_Description_Fields.php');

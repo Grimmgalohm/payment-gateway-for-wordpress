@@ -6,7 +6,7 @@ add_action('woocommerce_checkout_process', 'abcom_bbva_payment_description_field
 
 function abcom_bbva_payment_description_fields($description, $payment_id){
 
-  if( 'bbvapay' != $payment_id){
+  if( 'bbvapay' !== $payment_id){
 
     return $description;
 

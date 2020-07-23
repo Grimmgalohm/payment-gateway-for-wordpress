@@ -358,9 +358,6 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
 
     $order = wc_get_order( $order_id );
 
-    //include the package of the BBVA E-commerce github
-    require(dirname(__FILE__) . '/BBVA-PHP/Bbva.php');
-
     // checking for transiction
     $environment = ( $this->environment == "yes" ) ? 'TRUE' : 'FALSE';
     // Decide which URL to post to
