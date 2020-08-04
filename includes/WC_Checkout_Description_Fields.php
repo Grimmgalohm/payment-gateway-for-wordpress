@@ -1,8 +1,7 @@
 <?php
 
 add_filter('woocommerce_gateway_description', 'abcom_bbva_payment_description_fields', 20, 2);
-add_action('woocommerce_checkout_process', 'abcom_bbva_payment_description_fields_validation');
-//add_action('woocommerce_checkout_update_order_meta', 'abcom_bbva_payment_checkout_update_order_meta', 10, 1);
+add_action('woocommerce_checkout_process', 'abcom_bbva_payment_fields_validation');
 
 function abcom_bbva_payment_description_fields($description, $payment_id){
 
@@ -14,7 +13,7 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
 
   ob_start();
 
-  echo '<form>
+  echo '
           <div class="form-row">
             <div class="form-group col-md-6">';
   //Nombre en la tarjeta
@@ -26,6 +25,8 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
       'class'=> array('form-row', 'form-row-wide'),
       'placeholder'=> __('Como aparece en la tarjeta'),
       'required'=> true,
+      'method'=> 'POST',
+      'name'=>'card_name'
     )
   );
 
@@ -40,6 +41,8 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
       'class'=> array('form-row', 'form-row-wide'),
       'custom_attributes'=> array('style'=>'-webkit-appearance: textfield !important; margin: 0; -moz-appearance:textfield !important;'),
       'required'=> true,
+      'method'=> 'POST',
+      'name'=>'card_number',
     )
   );
 
@@ -71,6 +74,8 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
       'placeholder'=> __('MM'),
       'custom_attributes'=> array('style'=>'width:150px;'),
       'required'=> true,
+      'method'=> 'POST',
+      'name'=>'card_mm',
     )
   );
   echo '</div>
@@ -85,6 +90,8 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
       'placeholder'=> __('YY'),
       'custom_attributes'=> array('style'=>'width:150px;'),
       'required'=> true,
+      'method'=> 'POST',
+      'name'=>'card_yy',
     )
   );
   echo '</div>
@@ -101,6 +108,8 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
       'minlength'=> 3,
       'custom_attributes'=> array('style'=>'width:150px;'),
       'required'=> true,
+      'method'=> 'POST',
+      'name'=>'card_cvv',
     )
   );
   //echo '<img class="col-md-4 mb-3" src="' . plugins_url('../assets/credit-card-with-cvv-code.png', __FILE__) .'">';
@@ -113,23 +122,13 @@ function abcom_bbva_payment_description_fields($description, $payment_id){
 
 }
 
-function abcom_bbva_payment_description_fields_validation(){
+function abcom_bbva_payment_fields_validation(){
 
-  if('bbvapay' == $_POST['payment_method'] && !isset( $_POST['card_name'] ) || empty( $_POST['card_name'] ) || !isset($_POST['card_number']) || empty($_POST['card_number']) || !isset($_POST['card_mm']) || empty($_POST['card_mm']) || !isset($_POST['card_yy']) || empty($_POST['card_yy']) || !isset($_POST['card_cvv']) || empty($_POST['card_cvv']) ){
-        wc_add_notice('Ingresa todos los datos marcados como requeridos.', 'error');
-    }
-}
+if( 'bbvapay' == $_POST['payment_method'] && !isset($_POST['card_name']) || empty($_POST['card_name']) || !isset($_POST['card_number']) || empty($_POST['card_number']) || !isset($_POST['card_mm']) || empty($_POST['card_mm']) || !isset($_POST['card_yy']) || empty($_POST['card_yy']) || !isset($_POST['card_cvv']) || empty($_POST['card_cvv']) ){
 
-function abcom_bbva_payment_checkout_update_order_meta($order_id){
+  wc_add_notice('Por favor ingresa todos los datos marcados como obligatorios','error');
 
-  if(isset($_POST['card_name']) || !empty($_POST['card_name']) || isset($_POST['card_number']) || !empty($_POST['card_number']) || isset($_POST['card_mm']) || !empty($_POST['card_mm']) || isset($_POST['card_yy']) || !empty($_POST['card_yy']) || isset($_POST['card_cvv']) || !empty($_POST['card_cvv']) ){
-        update_post_meta($order_id, $card_name, $_POST['card_name']);
-        update_post_meta($order_id, $card_number, $_POST['card_number']);
-        update_post_meta($order_id, $card_mm, $_POST['card_mm']);
-        update_post_meta($order_id, $card_yy, $_POST['$card_yy']);
-        update_post_meta($order_id, $card_cvv, $_POST['card_cvv']);
-
-    }
+  }
 }
 
 ?>
