@@ -369,12 +369,19 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
       Bbva::setProductionMode(false);
     }
 
-    if ( $order->get_total() > 0 ) {
 
-      $this->bbva_payment_processing($order);
+    if ( $this->createBbvaCharge($order) ) {
+
+      wp_redirect($order["payment_method"]["url"]);
+
+      $this->get_response_and_handle_it($order);
+
+      exit;
 
     } else {
+
       $order->payment_complete();
+
     }
 
     // Remove cart.
@@ -383,11 +390,10 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
     // Return thankyou redirect.
     return array(
       'result'   => 'success',
-      'redirect' => $this->get_return_url( $order ),
     );
   }
 
-  private function bbva_payment_processing($order){
+  private function createBbvaCharge($order){
 
     //Set id and api key to use the bbva files
     Bbva::setId($this->m_id);
@@ -395,52 +401,59 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
 
     $bbva = Bbva::getInstance($this->m_id, $pri_key);
 
+    $redirect = wp_sanitize_redirect($this->get_return_url($order));
+
     $chargeRequest = array(
-      'affiliation_bbva' => $this->affiliation_number,
-      'amount' => $order->get_total(),
-      'description' => 'Pago de la orden: '. $order->get_transaction_id(),
-      'currency' => $order->get_currency(),
-      'order_id' => $order->get_id(),
-      'redirect_url' => $environment_url,
-      'card' => array(
-              'holder_name' => $_POST['card_name'],
-              'card_number' => $_POST['card_number'],
-              'expiration_month' => $_POST['card_mm'],
-              'expiration_year' => $_POST['card_yy'],
-              'cvv2' => $_POST['card_cvv']
-            ),
-      'customer' => array(
-          'name' => $order->get_shipping_first_name(),
-          'last_name' => $order->get_shipping_last_name(),
-          'email' => $order->get_billing_email(),
-          'phone_number' => $order->get_billing_phone()
-        )
-  );
+    'affiliation_bbva' => $this->affiliation_number,
+    'amount' => $order->get_total(),
+    'description' => 'Grupo Abarrotero Punto Com S.A. de C.V. Pago de la Orden: ' . $order->get_id(),
+    'currency' => $order->get_currency(),
+    'order_id' => 'O_ID'.$order->get_id(),
+    'redirect_url' => $redirect,
+    'customer' => array(
+        'name' => $order->get_billing_first_name(),
+        'last_name' => $order->get_billing_last_name(),
+        'email' => $order->get_billing_email(),
+        'phone_number' => $order->get_billing_phone() )
+      );
 
-  $charge = $bbva->charges->create($chargeRequest);
+      try{
+        $charge = $bbva->charges->create($chargeRequest);
 
-  $url = $environment_url .'/'. $this->m_id . '/' . $charge;
+        if($charge->error_message === null){
 
-    //var_dump($url);
+          echo json_decode($charge->payment_method->url);
 
-  	$response = wp_remote_post( $url, array( 'timeout' => 45 ) );
+        }else{
+          $order->update_status(
+            apply_filters(
+              'woocommerce_bbvapay_process_payment_order_status',
+              $order->has_downloadable_item() ? 'on-hold' : 'pending-payment', $order ),
+              __( 'Payment pending.', 'woocommerce' )
+          ); //End apply_filters
+        }
 
-  	if ( is_wp_error( $response ) ) {
-  		$error_message = $response->get_error_message();
-  		return "Something went wrong: $error_message";
-  	} else {
-  		echo '<pre>';
-  		var_dump( wp_remote_retrieve_body( $response ) );
-  		echo '</pre>';
-  	}
-    // Mark as processing or on-hold (payment won't be taken until delivery).
-    /*$order->update_status(
-      apply_filters(
-        'woocommerce_bbvapay_process_payment_order_status',
-        $order->has_downloadable_item() ? 'on-hold' : 'processing', $order ),
-        __( 'Payment pending.', 'woocommerce' )
-    ); //End apply_filters
-    */
+      }catch(Exception $e){
+
+        error_log('ERROR on the transaction: ' . $e->getMessage() .
+  	      ' [error code: ' . $e->getErrorCode() .
+  	      ', error category: ' . $e->getCategory() .
+  	      ', HTTP code: '. $e->getHttpCode() .
+  	      ', request ID: ' . $e->getRequestId() . ']', 0);
+
+          return false;
+      }
+
+      /*
+
+      // Mark as processing or on-hold (payment won't be taken until delivery).
+      $order->update_status(
+        apply_filters(
+          'woocommerce_bbvapay_process_payment_order_status',
+          $order->has_downloadable_item() ? 'on-hold' : 'processing', $order ),
+          __( 'Payment pending.', 'woocommerce' )
+      ); //End apply_filters
+      */
   }
 
   /**
