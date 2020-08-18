@@ -396,22 +396,11 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
     // Return thankyou redirect.
     return array(
       'result'   => 'success',
-      'redirect' => $this->get_return_url( $charge->payment_method->url ),
+      'redirect' => $charge->payment_method->url,
     );
     //
   }
 
-  function getChargeData(){
-    /*
-     * Get the data from the JSON Object and return it
-     *
-     * Evelyn dejó esta notita aquí :B
-     * ¡PUES SORPRESAAAAA!
-    */
-
-
-
-  }
   private function createBbvaCharge($order){
 
     //Set id and api key to use the bbva files
