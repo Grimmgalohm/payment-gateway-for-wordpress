@@ -1,7 +1,7 @@
 <?php
 
-add_filter('woocommerce_gateway_description', 'abcom_bbva_payment_description_fields', 20, 2);
-add_action('woocommerce_checkout_process', 'abcom_bbva_payment_fields_validation');
+//add_filter('woocommerce_gateway_description', 'abcom_bbva_payment_description_fields', 20, 2);
+//add_action('woocommerce_checkout_process', 'abcom_bbva_payment_fields_validation');
 
 function abcom_bbva_payment_description_fields($description, $payment_id){
 

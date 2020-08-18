@@ -358,25 +358,31 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
 
     $order = wc_get_order( $order_id );
 
-    // checking for transiction
-    $environment = ( $this->environment == "yes" ) ? 'TRUE' : 'FALSE';
-    // Decide which URL to post to
-    $environment_url = ( "FALSE" == $environment ) ? '' : 'https://sand-api.ecommercebbva.com/v1/';
+    Bbva::setProductionMode( ($this->environment === "yes") ? true : false);
 
-    if($environment_url == "TRUE"){
-      Bbva::setProductionMode(true);
-    }else{
-      Bbva::setProductionMode(false);
-    }
+    $charge = $this->createBbvaCharge($order);
 
+    //Validación propia de woocommerce
+    if ( $charge != false ) {
 
-    if ( $this->createBbvaCharge($order) ) {
+      //$data = json_decode($charge, true);
 
-      wp_redirect($order["payment_method"]["url"]);
+      //$this->transaction_id() = $charge->id;
 
-      $this->get_response_and_handle_it($order);
+      $nota =  '<h6>Id: '. $charge->id .'<h6>
+      <br><p><strong>Payment url</strong>: '.$charge->payment_method->url .
+      '<br><strong>status:</strong> '. $charge->status .
+      '<br><strong>date:</strong> '. $charge->operation_date.'</p>';
 
-      exit;
+      $order->add_order_note($nota);
+
+      $order->update_status(
+        apply_filters(
+          'woocommerce_bbvapay_process_payment_order_status',
+          $order->has_downloadable_item() ? 'on-hold' : 'processing', $order ),
+          __( 'Processing payment.', 'woocommerce' )
+      ); //End apply_filters
+
 
     } else {
 
@@ -390,9 +396,22 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
     // Return thankyou redirect.
     return array(
       'result'   => 'success',
+      'redirect' => $this->get_return_url( $charge->payment_method->url ),
     );
+    //
   }
 
+  function getChargeData(){
+    /*
+     * Get the data from the JSON Object and return it
+     *
+     * Evelyn dejó esta notita aquí :B
+     * ¡PUES SORPRESAAAAA!
+    */
+
+
+
+  }
   private function createBbvaCharge($order){
 
     //Set id and api key to use the bbva files
@@ -418,20 +437,10 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
       );
 
       try{
+
         $charge = $bbva->charges->create($chargeRequest);
 
-        if($charge->error_message === null){
-
-          echo json_decode($charge->payment_method->url);
-
-        }else{
-          $order->update_status(
-            apply_filters(
-              'woocommerce_bbvapay_process_payment_order_status',
-              $order->has_downloadable_item() ? 'on-hold' : 'pending-payment', $order ),
-              __( 'Payment pending.', 'woocommerce' )
-          ); //End apply_filters
-        }
+        return $charge;
 
       }catch(Exception $e){
 
@@ -445,7 +454,6 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
       }
 
       /*
-
       // Mark as processing or on-hold (payment won't be taken until delivery).
       $order->update_status(
         apply_filters(
