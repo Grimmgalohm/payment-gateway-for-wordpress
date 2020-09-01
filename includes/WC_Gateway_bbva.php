@@ -369,7 +369,9 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
 
       //$this->transaction_id() = $charge->id;
 
-      $nota =  '<h6>Id: '. $charge->id .'<h6>
+      update_post_meta( $order_id, 'bbva_charge_id', $charge->id );
+
+      $nota =  '<h3>Id: '. $charge->id .'<h3>
       <br><p><strong>Payment url</strong>: '.$charge->payment_method->url .
       '<br><strong>status:</strong> '. $charge->status .
       '<br><strong>date:</strong> '. $charge->operation_date.'</p>';
@@ -383,10 +385,16 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
           __( 'Processing payment.', 'woocommerce' )
       ); //End apply_filters
 
-
     } else {
 
-      $order->payment_complete();
+      $order->add_order_note(sprintf("%s Credit Card Payment Failed with message: '%s'", 'bbva-payments-woo', 'Status ' + $charge->status));
+      $order->set_status('failed');
+      $order->save();
+      if (function_exists('wc_add_notice')) {
+        wc_add_notice(__('Error en la transacción: No se pudo completar tu pago.'), 'error');
+      } else {
+        $woocommerce->add_error(__('Error en la transacción: No se pudo completar tu pago.'), 'woothemes');
+      }
 
     }
 
@@ -407,7 +415,7 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
     Bbva::setId($this->m_id);
     Bbva::setApiKey($this->priv_key);
 
-    $bbva = Bbva::getInstance($this->m_id, $pri_key);
+    $bbva = Bbva::getInstance($this->m_id, $this->priv_key);
 
     $redirect = wp_sanitize_redirect($this->get_return_url($order));
 
@@ -452,6 +460,7 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
       ); //End apply_filters
       */
   }
+
 
   /**
    * Output for the order received page.
