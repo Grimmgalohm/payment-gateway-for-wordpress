@@ -35,6 +35,11 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
     $this->enable_for_virtual = $this->get_option( 'enable_for_virtual', 'yes' ) === 'yes';
     $this->environment        = $this->get_option( 'environment', 'yes' ) === 'yes';
 
+    $this->supports = array(
+      'products',
+      'refunds'
+    );
+
     add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
     add_action( 'woocommerce_thankyou_' . $this->id, array( $this, 'thankyou_page' ) );
     add_filter( 'woocommerce_payment_complete_order_status', array( $this, 'change_payment_complete_order_status' ), 10, 3 );
@@ -369,12 +374,13 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
 
       //$this->transaction_id() = $charge->id;
 
-      update_post_meta( $order_id, 'bbva_charge_id', $charge->id );
+      update_post_meta( $order->get_id(), 'bbva_charge_id', $charge->id );
 
       $nota =  '<h3>Id: '. $charge->id .'<h3>
       <br><p><strong>Payment url</strong>: '.$charge->payment_method->url .
       '<br><strong>status:</strong> '. $charge->status .
-      '<br><strong>date:</strong> '. $charge->operation_date.'</p>';
+      '<br><strong>date:</strong> '. $charge->operation_date.
+      '<br>Order id: '.$order->get_id().'</p>';
 
       $order->add_order_note($nota);
 
@@ -461,6 +467,75 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
       */
   }
 
+  /**
+  * This code is for support refound via gateway
+  *
+  *
+  **/
+
+  public function process_refund( $order_id, $amount = null, $reason = '' ) {
+
+    $order = wc_get_order( $order_id );
+
+		if ( ! $this->can_refund_order( $order ) ) {
+			return new WP_Error( 'error', __( 'Refund failed.', 'woocommerce' ) );
+		}
+
+    $refundData = array(
+      'description' => $reason,
+      'amount' => $amount
+    );
+
+    // Do your refund here. Refund $amount for the order with ID $order_id
+    $bbva = Bbva::getInstance($this->m_id, $this->priv_key);
+
+    $charge_id = get_post_meta($order->get_id(), 'bbva_charge_id', true);
+
+    try{
+
+      $charge = $bbva->charges->get($charge_id);
+
+      $charge->refund($refundData);
+
+      if($charge->refund->status != 'completed' && $charge->refund->error_message != null){
+
+        $message = 'Status: '.$charge->refund->status.'<br>Error message: '.$charge->refund->error_message.'.';
+
+        $order->add_order_note($message);
+
+        return new WP_Error( 'wc-order', __( 'Something went wrong, please try later', 'yourtextdomain' ) );
+
+      }
+
+      $refund = $charge->refund;
+
+      $message = 'Orden reembolsada exitosamente'.
+      '<br>Status: '. $refund->status .
+      '<br>Authorization: '. $refund->authorization .
+      '<br>ID: '. $refund->id .
+      '<br>Description: '. $refund->description .
+      '<br>Date: '. $refund->operation_date .'.';
+
+      $order->add_order_note($message);
+
+      return true;
+
+
+    }catch(Exception $e){
+
+      error_log('ERROR on the transaction: ' . $e->getMessage() .
+        ' [error code: ' . $e->getErrorCode() .
+        ', error category: ' . $e->getCategory() .
+        ', HTTP code: '. $e->getHttpCode() .
+        ', request ID: ' . $e->getRequestId() . ']', 0);
+
+        return new WP_Error( 'wc-order', __( 'Something went wrong, please try later', 'yourtextdomain' ) );
+
+    }
+    //return true;
+  }
+
+  function bbva_do_refund($refundData){}
 
   /**
    * Output for the order received page.

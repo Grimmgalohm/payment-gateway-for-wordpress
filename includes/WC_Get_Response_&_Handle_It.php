@@ -61,6 +61,9 @@ function bbva_wc_process_order_meta_box_action( $order ) {
   // Get the desired WC_Payment_Gateway object
   $payment_gateway    = $payment_gateways->payment_gateways()[$payment_gateway_id];
 
+  //$message = $charge_id.'<br>'.$order->get_id();
+  //$order->add_order_note($message);
+
   $bbva = Bbva::getInstance($payment_gateway->m_id, $payment_gateway->priv_key);
 
   try{

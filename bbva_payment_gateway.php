@@ -26,6 +26,7 @@ function bbva_init_gateway_class(){
 	include_once(dirname(__FILE__) . '/includes/WC_Gateway_bbva.php');
 
 	//include_once(dirname(__FILE__) . '/includes/WC_Checkout_Description_Fields.php');
+	
 	include_once(dirname(__FILE__) . '/includes/WC_Get_Response_&_Handle_It.php');
 
 	add_filter('woocommerce_payment_gateways', 'bbva_add_gateway_class');
