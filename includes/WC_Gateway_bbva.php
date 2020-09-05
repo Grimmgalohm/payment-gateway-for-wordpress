@@ -363,7 +363,9 @@ class WC_Gateway_bbva extends WC_Payment_Gateway {
 
     $order = wc_get_order( $order_id );
 
-    Bbva::setProductionMode( ($this->environment === "yes") ? true : false);
+    $isProductionMode = $this->environment === "yes" ? true : false
+
+    Bbva::setProductionMode($isProductionMode);
 
     $charge = $this->createBbvaCharge($order);
 
