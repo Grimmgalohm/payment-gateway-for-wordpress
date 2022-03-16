@@ -13,6 +13,8 @@
  	* @package WooCommerce\bbva_payments
 */
 
+ 	//Nuevo comentario para rama visualchanges
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
