@@ -9,6 +9,9 @@ add_action( 'woocommerce_order_actions', 'bbva_wc_add_order_meta_box_action');
  * @param array $actions order actions array to display
  * @return array - updated actions
  */
+
+//Comentario en master para ejemplo
+
 function bbva_wc_add_order_meta_box_action( $actions ) {
 
     global $theorder;
